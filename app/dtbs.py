@@ -16,45 +16,23 @@ def create_dtbs(conn, name_table:str):
     cur = conn.cursor()
         
     try:
-        if name_table.lower() == "officer":
+        if name_table.lower() == "books":
             cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS officer (
-                id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                firstname TEXT NOT NULL,
-                middlename TEXT NOT NULL,
-                lastname TEXT NOT NULL,
-                birthdate TEXT NOT NULL,
-                rank TEXT NOT NULL,
-                divisionid INT,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-            """)
-
-        elif name_table.lower() == "cadet":
-            cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS cadet (
-                id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                firstname TEXT NOT NULL,
-                middlename TEXT NOT NULL,
-                lastname TEXT NOT NULL,
-                birthdate TEXT NOT NULL,
-                rank TEXT NOT NULL,
-                divisionid INT,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-            """)
-
-        elif name_table.lower() == "division":
-            cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS division (
+            CREATE TABLE IF NOT EXISTS books (
                 id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                 name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                author TEXT,
+                price TEXT,
+                money TEXT NOT NULL,        
                 created_at TIMESTAMP DEFAULT NOW()
             );
             """)
 
+            print(f"OK | create {name_table.lower()}")
+
         else:
-            print("Введи division, cadet или officer")
+            print("Введи другое имя")
             return
         
         conn.commit()
@@ -76,6 +54,3 @@ def delete_table(conn, name_table):
     cur.execute(f"DROP TABLE IF EXISTS {name_table};")
     conn.commit()
     print(f"Таблица {name_table} удалена")
-
-def sort_dtbs(conn):
-    pass

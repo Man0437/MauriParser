@@ -1,18 +1,13 @@
-from person import Person
-from modules.fun import validate_birthdate
-
+from fun import validate_birthdate
+from dataclasses import dataclass
 
 class Books():
-
+    
     def __init__(self):
-        self.id = 1
+        self.list_books = []
+    
     def help(self, conn, args):
-        print("""Books module commands:
-- help -
-- list -
-- add -
-- edit -
-- delete -""")
+        print("""Books module commands""")
 
     def list(self, conn, args):
         cur = conn.cursor()
@@ -41,21 +36,25 @@ class Books():
             filters.append("id = %s")
             values.append(args.i)
 
-        if args.l:
-            filters.append("lastname = %s")
-            values.append(args.l)
+        if args.n:
+            filters.append("name = %s")
+            values.append(args.n)
 
-        if args.d:
-            filters.append("divisionid = %s")
-            values.append(args.d)
+        if args.t:
+            filters.append("type = %s")
+            values.append(args.t)
 
-        if args.r:
-            filters.append("rank = %s")
-            values.append(args.r)
+        if args.a:
+            filters.append("author = %s")
+            values.append(args.a)
 
-        if args.c:
-            filters.append("cadetid = %s")
-            values.append(args.c)
+        if args.p:
+            filters.append("price = %s")
+            values.append(args.p)
+
+        if args.m:
+            filters.append("money = %s")
+            values.append(args.m)
 
         where_clause = ""
         if filters:
@@ -64,19 +63,18 @@ class Books():
         # ---------------- ORDER BY
         order_map = {
             "id": "id",
-            "lastName": "lastname"
+            "name": "name"
         }
 
-        order_clause = ""
-        if args.s and args.s in order_map:
-            order_clause = f"ORDER BY {order_map[args.s]}"
+        #order_clause = ""
+        #if args.s and args.s in order_map:
+        #    order_clause = f"ORDER BY {order_map[args.s]}"
 
         # ---------------- FINAL QUERY
         query = f"""
             SELECT {select_clause}
-            FROM cadet
+            FROM books
             {where_clause}
-            {order_clause}
         """
 
         cur.execute(query, values)
@@ -88,87 +86,39 @@ class Books():
                 f"{field}: {value}"
                 for field, value in zip(selected, row)
             )
-            print(f"{{Cadet: {{{inner}}}}}")
+            print(f"{{Books: {{{inner}}}}}")
 
         cur.close()
 
-    def add(self, conn, args):
-        if validate_birthdate(args.b) == False:
-            print("Неправильный формат дня рождения")
-            return
-        
-        if args.r != "sergeant" and args.r != "private":
-            print("Неправильный ранк для солдата")
-            return
+    def add(self, conn, args): # Здесь args - это список с кортежами значений из htmlparse!
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO cadet (
-                firstname,
-                middlename,
-                lastname,
-                birthdate,
-                rank,
-                divisionid
+            INSERT INTO books (
+                name,
+                type,
+                author,
+                price,
+                money
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s)
         """, (
-            args.f,
-            args.m,
-            args.l,
-            args.b,
-            args.r,
-            args.d
+            args[0],
+            args[1],
+            args[2],
+            args[3],
+            args[4]
         ))
         conn.commit()
         cur.close()
 
-    def edit(self, conn, args):
-        cur = conn.cursor()
-
-        fields = []
-        values = []
-
-        if args.f:
-            fields.append("firstname = %s")
-            values.append(args.f)
-        if args.m:
-            fields.append("middlename = %s")
-            values.append(args.m)
-        if args.l:
-            fields.append("lastname = %s")
-            values.append(args.l)
-        if args.b:
-            fields.append("birthdate = %s")
-            values.append(args.b)
-        if args.r:
-            fields.append("rank = %s")
-            values.append(args.r)
-        if args.d:
-            fields.append("divisionid = %s")
-            values.append(args.d)
-
-        if not fields:
-            print("Ничего не передали для обновления")
-        values.append(args.i)
-
-
-        query = f"""
-            UPDATE cadet
-            SET {', '.join(fields)}
-            WHERE id = %s
-        """
-
-        cur.execute(query, values)
-        conn.commit()
-        cur.close
-        print("Запись обновлена")
+# Возможно будет удаление
 
     def delete(self, conn, args):
         cur = conn.cursor()
 
         if args.a:
-            cur.execute("DELETE FROM cadet")
+            cur.execute("DELETE FROM books")
             conn.commit()
             cur.close()
             print(f"Удалены все записи из {args.entity}")
@@ -176,7 +126,7 @@ class Books():
 
 
         cur.execute(
-            "DELETE FROM cadet WHERE id = %s",
+            "DELETE FROM books WHERE id = %s",
             (args.i,)
         )
         conn.commit()
