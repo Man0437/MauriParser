@@ -1,115 +1,221 @@
-from playwright.sync_api import sync_playwright
-import requests
-from bs4 import BeautifulSoup
+from person import Person
+from modules.fun import validate_birthdate
+
 
 class Books():
 
     def __init__(self):
-        self.listBooks = tuple()
+        self.id = 1
+    def help(self, conn, args):
+        print("""Books module commands:
+- help -
+- list -
+- add -
+- edit -
+- delete -""")
 
-    def htmlMain(self):
-        with sync_playwright() as p:
-            browser = p.firefox.launch()
-            context = browser.new_context()
-            page = context.new_page()
+    def list(self, conn, args):
+        cur = conn.cursor()
 
-            page.goto("https://www.books.ru/")
-            page.wait_for_timeout(1000)
+        # ---------------- SELECT (поля)
+        field_map = {
+            "i": "id",
+            "n": "name",
+            "a": "author",
+            "t": "type",
+            "p": "price" 
+        }
 
-            cookies = context.cookies()
-            browser.close()
-
-            cookie_dict = {c['name']: c['value'] for c in cookies}
-        import os.path
-        if(os.path.exists("cookies/cookies.txt")):
-            pass
+        if args.p:
+            selected = [field_map[ch] for ch in args.p if ch in field_map]
         else:
-            with open("cookies/cookies.txt", mode="w") as file:
-                import json
-                file.write(json.dumps(cookie_dict))
+            selected = list(field_map.values())
 
-        if(os.path.exists("html/response.html")):
-            pass
-        else:
-            url = "https://www.books.ru/"
-            response = requests.get(url, cookies=cookie_dict)
-            with open("html/response.html", mode="w") as file:
-                file.write(response.text)
+        select_clause = ", ".join(selected)
+
+        # ---------------- WHERE (фильтры)
+        filters = []
+        values = []
+
+        if args.i:
+            filters.append("id = %s")
+            values.append(args.i)
+
+        if args.l:
+            filters.append("lastname = %s")
+            values.append(args.l)
+
+        if args.d:
+            filters.append("divisionid = %s")
+            values.append(args.d)
+
+        if args.r:
+            filters.append("rank = %s")
+            values.append(args.r)
+
+        if args.c:
+            filters.append("cadetid = %s")
+            values.append(args.c)
+
+        where_clause = ""
+        if filters:
+            where_clause = "WHERE " + " AND ".join(filters)
+
+        # ---------------- ORDER BY
+        order_map = {
+            "id": "id",
+            "lastName": "lastname"
+        }
+
+        order_clause = ""
+        if args.s and args.s in order_map:
+            order_clause = f"ORDER BY {order_map[args.s]}"
+
+        # ---------------- FINAL QUERY
+        query = f"""
+            SELECT {select_clause}
+            FROM cadet
+            {where_clause}
+            {order_clause}
+        """
+
+        cur.execute(query, values)
+        rows = cur.fetchall()
+
+        # ---------------- PRINT
+        for row in rows:
+            inner = ", ".join(
+                f"{field}: {value}"
+                for field, value in zip(selected, row)
+            )
+            print(f"{{Cadet: {{{inner}}}}}")
+
+        cur.close()
+
+    def add(self, conn, args):
+        if validate_birthdate(args.b) == False:
+            print("Неправильный формат дня рождения")
+            return
         
+        if args.r != "sergeant" and args.r != "private":
+            print("Неправильный ранк для солдата")
+            return
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO cadet (
+                firstname,
+                middlename,
+                lastname,
+                birthdate,
+                rank,
+                divisionid
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            args.f,
+            args.m,
+            args.l,
+            args.b,
+            args.r,
+            args.d
+        ))
+        conn.commit()
+        cur.close()
+
+    def edit(self, conn, args):
+        cur = conn.cursor()
+
+        fields = []
+        values = []
+
+        if args.f:
+            fields.append("firstname = %s")
+            values.append(args.f)
+        if args.m:
+            fields.append("middlename = %s")
+            values.append(args.m)
+        if args.l:
+            fields.append("lastname = %s")
+            values.append(args.l)
+        if args.b:
+            fields.append("birthdate = %s")
+            values.append(args.b)
+        if args.r:
+            fields.append("rank = %s")
+            values.append(args.r)
+        if args.d:
+            fields.append("divisionid = %s")
+            values.append(args.d)
+
+        if not fields:
+            print("Ничего не передали для обновления")
+        values.append(args.i)
 
 
-    def parseBestsellerPage(self):
-        with open("html/bestseller.html", mode="r", encoding="utf-8") as file:
-            self.html_bestseller = file.read()
-        soup = BeautifulSoup(self.html_bestseller, "html.parser")
-        p = soup.find('div', "book-catalog_item")
-        i = 0
-        while p is not None:
-            i+=1 
-            name_books = p.find("a", "custom-link book-catalog_item_title")
-            type_books = p.find("a", "viewed-items-book books viewed-items-book-card")
+        query = f"""
+            UPDATE cadet
+            SET {', '.join(fields)}
+            WHERE id = %s
+        """
 
-            price_books = p.find("div", "book-catalog_item_price-wrap")
-            price = price_books.find("span", "book-price")
-            author_books = p.find("a", "")
+        cur.execute(query, values)
+        conn.commit()
+        cur.close
+        print("Запись обновлена")
 
-            if name_books is not None:
-                name = name_books.string
-            else:
-                name = "None"
+    def delete(self, conn, args):
+        cur = conn.cursor()
 
-            if type_books is not None:
-                type = type_books.string
-            else:
-                type = "None"
+        if args.a:
+            cur.execute("DELETE FROM cadet")
+            conn.commit()
+            cur.close()
+            print(f"Удалены все записи из {args.entity}")
+            return
 
-            if price is not None:
-                price_n = price.get_text()
-            else:
-                price_n = "None"
 
-            if author_books is not None:
-                author = author_books.get_text()
-            else:
-                author = "None"
+        cur.execute(
+            "DELETE FROM cadet WHERE id = %s",
+            (args.i,)
+        )
+        conn.commit()
+        cur.close()
 
-            print(f"Название: {name}\nАвтор: {author}\nТип: {type}\nЦена: {price_n}\n___{i}___")
-            p = p.find_next('div', "book-catalog_item")
+        print(f"Удалена запись {args.i} из таблицы {args.entity}")
 
-    def parseMainPage(self):
-        with open("test/response.html", mode="r", encoding="utf-8") as file:
-            self.html_main = file.read()
-        soup = BeautifulSoup(self.html_main, "html.parser")
-        p = soup.find('div', "book-catalog_item")
-        i = 0
-        while p is not None:
-            i+=1 
-            name_books = p.find("a", "custom-link book-catalog_item_title")
-            type_books = p.find("a", "viewed-items-book books viewed-items-book-card")
+    def add_help(self):
+        print("""Cadet add command parameters:
+-f : first name, required
+-m : middle name, required
+-l : last name, required
+-b : birth date, required, format yyyy-MM-dd
+-r : rank, required
+-d : division ID, required""")
 
-            price_books = p.find("div", "book-catalog_item_price-wrap")
-            price = price_books.find("span", "book-price")
-            author_books = p.find("a", "")
+    def list_help(self):
+        print("""Cadet list command parameters:
+-i : ID
+-l : last name
+-d : division ID
+-r : rank
+-o : division officer ID
+-s : sorting, possible id, lastName
+-p : properties view, combination of i - id, r - rank, f - firstName, m - middleName, l - lastName, b – birthDate""")
 
-            if name_books is not None:
-                name = name_books.string
-            else:
-                name = "None"
+    def delete_help(self):
+        print("""Cadet delete command parameters:
+-i : ID
+-d : division ID
+-o : division officer ID
+-a : delete all cadets""")
 
-            if type_books is not None:
-                type = type_books.string
-            else:
-                type = "None"
-
-            if price is not None:
-                price_n = price.get_text()
-            else:
-                price_n = "None"
-
-            if author_books is not None:
-                author = author_books.get_text()
-            else:
-                author = "None"
-
-            print(f"Название: {name}\nАвтор: {author}\nТип: {type}\nЦена: {price_n}\n___{i}___")
-            p = p.find_next('div', "book-catalog_item")
+    def edit_help(self):
+        print("""Cadet edit command parameters:
+-i : ID, required
+-f : first name
+-m : middle name
+-l : last name
+-b : birth date, format yyyy-MM-dd
+-r : rank
+-d : division ID""")

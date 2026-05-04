@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 
 
+
+
 def print_books(name, author, type, price_n, i):
     print(f"Название: {name}\nАвтор: {author}\nТип: {type}\nЦена: {price_n}\n___{i}___")
 
