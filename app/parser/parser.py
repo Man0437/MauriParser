@@ -1,12 +1,19 @@
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from books import Books
+from models.books import Books, BookRepository
 from dataclasses import dataclass
 
 import requests
 import os.path
+import configparser
+import logging
+from logger import setup_logger
+import sys
 
+setup_logger()
+logger = logging.getLogger(__name__)
 # Если кому понадобится, то удобный вывод для записей с отпаршеного html, аналог Books.list() с другим выводом
+
 def print_books(name, author, type, price_n, i):
     print(f"Название: {name}\nАвтор: {author}\nТип: {type}\nЦена: {price_n}\n___{i}___")
 
@@ -18,8 +25,18 @@ class Parser():
         # context - поле класса
     
         # Можно добавить еще поле для самого парсера, но я не знаю зачем
+        self.config = configparser.ConfigParser()
+        try:
+            print(self.config.read("config.ini"))
+            self.config.read("../config/parse.conf")
+            self.update_html_bool: bool = self.config.getboolean("parsing", "UPDATE_HTML")
+        except configparser.NoSectionError:
+            logger.error("Ошибка при чтении конфига")
+            sys.exit(0)
+        logger.info("ОК | Прочитан конфиг")
+        logger.info(f"Выставленное значение - {self.update_html_bool}")
 
-        self.books = Books()
+        self.books = BookRepository()
         with sync_playwright() as p:
             self.browser = p.firefox.launch()
             self.context = self.browser.new_context()
@@ -29,11 +46,11 @@ class Parser():
             cookies = self.context.cookies()
             self.browser.close()
 
-        print("OK | Browser")
+        logger.info("OK | Браузер")
         self.cookie_dict = {c['name']: c['value'] for c in cookies}
-        print("OK | Cookies")
+        logger.info("OK | Cookie")
 
-    def checkfiles(self):
+    def check_files(self):
         if(os.path.exists("../cookies/cookies.txt")):
             pass
         else:
@@ -49,9 +66,11 @@ class Parser():
             with open("../html/response.html", mode="w") as file:
                 file.write(response.text)
 
-        print("OK | Checked files")
+        logger.info("OK | Файлы проверены")
     
-    def parsehtml(self):
+    # Парсинг только сайт books.ru
+    # Позже будет добавлена функция парсинга данных со страницы с сотнями книг (Этот сайт)
+    def parse_html_file(self):
 
         with open("../html/response.html", mode="r", encoding="utf-8") as file:
             self.html_doc = file.read()
@@ -88,13 +107,22 @@ class Parser():
             else:
                 author = "None"
 
-            self.books.list_books.append((name, type, author, price_n[0], price_n[1]))
+            self.books.books.append((name, type, author, price_n[0], price_n[1]))
             #print_books(name, author, type, price_n, i) Для вывода красивого
             p = p.find_next('div', "book-catalog_item")
 
+    def update_html(self):
+        url = "https://www.books.ru/"
+        response = requests.get(url, cookies=self.cookie_dict)
+        with open("../html/response.html", mode="w") as file:
+            file.write(response.text)
+        logger.info("ОК | HTML обновлен")
+
     def parse(self, conn):
-        self.checkfiles()
-        self.parsehtml()
-        for i in self.books.list_books:
+        self.check_files()
+        if(self.update_html_bool):
+            self.update_html()
+        self.parse_html_file()
+        for i in self.books.books:
             self.books.add(conn, i)
-        print("OK | Добавлены строки")
+        logger.info("OK | Добавлены строки")

@@ -1,4 +1,9 @@
 import psycopg2
+import logging
+from logger import setup_logger
+
+setup_logger()
+logger = logging.getLogger(__name__)
 
 def conn_dtbs():
     conn = psycopg2.connect(

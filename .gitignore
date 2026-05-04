@@ -1,6 +1,11 @@
-parser
+/parser
 text.txt
 cookies/cookies.txt
 venv
 .vscode
 app/__pycache__
+logs/mauri.logs
+app/models/__pycache__
+app/parser/__pycache__
+app/ui/__pycache__
+html/response.html
