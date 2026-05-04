@@ -133,39 +133,3 @@ class Books():
         cur.close()
 
         print(f"Удалена запись {args.i} из таблицы {args.entity}")
-
-    def add_help(self):
-        print("""Cadet add command parameters:
--f : first name, required
--m : middle name, required
--l : last name, required
--b : birth date, required, format yyyy-MM-dd
--r : rank, required
--d : division ID, required""")
-
-    def list_help(self):
-        print("""Cadet list command parameters:
--i : ID
--l : last name
--d : division ID
--r : rank
--o : division officer ID
--s : sorting, possible id, lastName
--p : properties view, combination of i - id, r - rank, f - firstName, m - middleName, l - lastName, b – birthDate""")
-
-    def delete_help(self):
-        print("""Cadet delete command parameters:
--i : ID
--d : division ID
--o : division officer ID
--a : delete all cadets""")
-
-    def edit_help(self):
-        print("""Cadet edit command parameters:
--i : ID, required
--f : first name
--m : middle name
--l : last name
--b : birth date, format yyyy-MM-dd
--r : rank
--d : division ID""")
