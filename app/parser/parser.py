@@ -70,6 +70,50 @@ class Parser():
     
     # Парсинг только сайт books.ru
     # Позже будет добавлена функция парсинга данных со страницы с сотнями книг (Этот сайт)
+
+
+    # Функция для парсинга книг со скидкой
+    def parse_html_file_sellers(self):
+        with open("../html/sellers.html", mode="r", encoding="utf-8") as file:
+            self.html_doc = file.read()
+
+        soup = BeautifulSoup(self.html_doc, "html.parser")
+        p = soup.find('div', "book-catalog_item")
+        i = 0
+        while p is not None:
+            i+=1 
+            name_books = p.find("a", "custom-link book-catalog_item_title")
+            type_books = p.find("a", "viewed-items-book books viewed-items-book-card")
+
+            price_books = p.find("div", "book-catalog_item_price-wrap")
+            price = price_books.find("span", "book-price")
+            author_books = p.find("a", "")
+
+            if name_books is not None:
+                name = name_books.string
+            else:
+                name = "None"
+
+            if type_books is not None:
+                type = type_books.string
+            else:
+                type = "None"
+
+            if price is not None:
+                price_n = price.get_text().split()
+            else:
+                price_n = "None"
+
+            if author_books is not None:
+                author = author_books.get_text()
+            else:
+                author = "None"
+
+            self.books.books.append((name, type, author, price_n[0], price_n[1]))
+            #print_books(name, author, type, price_n, i) Для вывода красивого
+            p = p.find_next('div', "book-catalog_item")
+
+
     def parse_html_file(self):
 
         with open("../html/response.html", mode="r", encoding="utf-8") as file:

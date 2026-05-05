@@ -59,7 +59,7 @@ def make_execute_list(args):
             {where_clause}
         """
         return (query, values, selected)
-
+# Пока промежуточный класс для дальнейшей разработки
 class Books():
     def __init__(self):
         self.list_books = []
@@ -72,6 +72,9 @@ class BookRepository():
         print("""Books module commands""")
 
     def list(self, conn, args):
+        
+        string_books = ""
+        
         cur = conn.cursor()
         query_values_selected = make_execute_list(args)
         cur.execute(query_values_selected[0], query_values_selected[1])
@@ -83,9 +86,11 @@ class BookRepository():
                 f"{field}: {value}"
                 for field, value in zip(query_values_selected[2], row)
             )
-            print(f"{{Books: {{{inner}}}}}")
+            string_books+=f"{{Books: {{{inner}}}}}\n"
 
         cur.close()
+        #print(string_books)
+        return string_books
 
     def add(self, conn, args): # Здесь args - это список с кортежами значений из htmlparse!
         cur = conn.cursor()
@@ -118,7 +123,7 @@ class BookRepository():
             cur.execute("DELETE FROM books")
             conn.commit()
             cur.close()
-            print(f"Удалены все записи из {args.entity}")
+            logger.info(f"Удалены все записи из {args.entity}")
             return
 
 
@@ -129,4 +134,4 @@ class BookRepository():
         conn.commit()
         cur.close()
 
-        print(f"Удалена запись {args.i} из таблицы {args.entity}")
+        logger.info(f"Удалена запись {args.i} из таблицы {args.entity}")

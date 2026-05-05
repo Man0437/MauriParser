@@ -17,9 +17,7 @@ def conn_dtbs():
 # Для теста были сделаны эти функции
 
 def create_dtbs(conn, name_table:str):
-    
     cur = conn.cursor()
-        
     try:
         if name_table.lower() == "books":
             cur.execute(f"""
@@ -34,10 +32,10 @@ def create_dtbs(conn, name_table:str):
             );
             """)
 
-            print(f"OK | create {name_table.lower()}")
+            logging.info(f"OK | create {name_table.lower()}")
 
         else:
-            print("Введи другое имя")
+            logging.warning("Введи другое имя")
             return
         
         conn.commit()
@@ -49,7 +47,7 @@ def create_dtbs(conn, name_table:str):
     finally:
         cur.close()
     
-    print(f"Создана таблица {name_table}")
+    logger.info(f"Создана таблица {name_table}")
     conn.commit()
 
 
@@ -58,4 +56,4 @@ def delete_table(conn, name_table):
     cur = conn.cursor()
     cur.execute(f"DROP TABLE IF EXISTS {name_table};")
     conn.commit()
-    print(f"Таблица {name_table} удалена")
+    logger.info(f"Таблица {name_table} удалена")

@@ -2,11 +2,11 @@ from models.books import BookRepository
 from models.dtbs import conn_dtbs, create_dtbs
 from parser.terminalparse import TerminalParser
 from parser.parser import Parser
+from logger import setup_logger
 
-import argparse
 import sys
 import logging
-from logger import setup_logger
+import os.path
 
 
 ENTITY = {
@@ -51,4 +51,3 @@ if __name__ == "__main__":
     cor.close()
     logger.info("ОК | Соединение закрыто")
     sys.exit(0)
-    
