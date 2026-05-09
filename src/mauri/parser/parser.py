@@ -1,13 +1,14 @@
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from models.books import Books, BookRepository
+from mauri.models.books import Books, BookRepository
 from dataclasses import dataclass
+from mauri.utils.settings import HTML_FILE, CONFIG_FILE, COOKIES_FILE
 
 import requests
 import os.path
 import configparser
 import logging
-from logger import setup_logger
+from mauri.utils.logger import setup_logger
 import sys
 
 setup_logger()
@@ -26,9 +27,9 @@ class Parser():
     
         # Можно добавить еще поле для самого парсера, но я не знаю зачем
         self.config = configparser.ConfigParser()
+        
         try:
-            print(self.config.read("config.ini"))
-            self.config.read("../config/parse.conf")
+            self.config.read(CONFIG_FILE)
             self.update_html_bool: bool = self.config.getboolean("parsing", "UPDATE_HTML")
         except configparser.NoSectionError:
             logger.error("Ошибка при чтении конфига")
@@ -51,19 +52,19 @@ class Parser():
         logger.info("OK | Cookie")
 
     def check_files(self):
-        if(os.path.exists("../cookies/cookies.txt")):
+        if(os.path.exists(COOKIES_FILE)):
             pass
         else:
-            with open("../cookies/cookies.txt", mode="w") as file:
+            with open(COOKIES_FILE, mode="w") as file:
                 import json
                 file.write(json.dumps(self.cookie_dict))
 
-        if(os.path.exists("../html/response.html")):
+        if(os.path.exists(HTML_FILE)):
             pass
         else:
             url = "https://www.books.ru/"
             response = requests.get(url, cookies=self.cookie_dict)
-            with open("../html/response.html", mode="w") as file:
+            with open(HTML_FILE, mode="w") as file:
                 file.write(response.text)
 
         logger.info("OK | Файлы проверены")
@@ -116,7 +117,7 @@ class Parser():
 
     def parse_html_file(self):
 
-        with open("../html/response.html", mode="r", encoding="utf-8") as file:
+        with open(HTML_FILE, mode="r", encoding="utf-8") as file:
             self.html_doc = file.read()
 
         soup = BeautifulSoup(self.html_doc, "html.parser")
@@ -158,7 +159,7 @@ class Parser():
     def update_html(self):
         url = "https://www.books.ru/"
         response = requests.get(url, cookies=self.cookie_dict)
-        with open("../html/response.html", mode="w") as file:
+        with open(HTML_FILE, mode="w") as file:
             file.write(response.text)
         logger.info("ОК | HTML обновлен")
 
@@ -170,3 +171,4 @@ class Parser():
         for i in self.books.books:
             self.books.add(conn, i)
         logger.info("OK | Добавлены строки")
+        logger.info("OK | Парсинг завершен")

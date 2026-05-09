@@ -1,8 +1,8 @@
-from models.books import BookRepository
-from models.dtbs import conn_dtbs, create_dtbs
-from parser.terminalparse import TerminalParser
-from parser.parser import Parser
-from logger import setup_logger
+from mauri.models.books import BookRepository
+from mauri.models.dtbs import conn_dtbs, create_dtbs
+from mauri.parser.terminalparse import TerminalParser
+from mauri.parser.parser import Parser
+from mauri.utils.logger import setup_logger
 
 import sys
 import logging
@@ -11,7 +11,8 @@ import os.path
 
 ENTITY = {
     "books": BookRepository,
-    "parse": Parser
+    "parse": Parser,
+    "ui": Ui
 }
 
 if __name__ == "__main__":

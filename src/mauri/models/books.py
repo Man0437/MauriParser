@@ -1,8 +1,8 @@
-from fun import validate_birthdate
+from mauri.ui.fun import validate_birthdate
 from dataclasses import dataclass
 
 import logging
-from logger import setup_logger
+from mauri.utils.logger import setup_logger
 
 setup_logger()
 logger = logging.getLogger(__name__)
@@ -13,7 +13,8 @@ def make_execute_list(args):
             "n": "name",
             "a": "author",
             "t": "type",
-            "p": "price" 
+            "p": "price",
+            "m": "money"
         }
         if args.p:
             selected = [field_map[ch] for ch in args.p if ch in field_map]
@@ -61,8 +62,13 @@ def make_execute_list(args):
         return (query, values, selected)
 # Пока промежуточный класс для дальнейшей разработки
 class Books():
-    def __init__(self):
-        self.list_books = []
+    def __init__(self, book_id, book_name, book_type, book_author, book_price, book_money):
+        self.id: int = book_id
+        self.name: str = book_name
+        self.type: str = book_type
+        self.author: str = book_author
+        self.price: float = book_price
+        self.money: str = book_money
 
 class BookRepository():
     def __init__(self):
@@ -71,26 +77,30 @@ class BookRepository():
     def help(self, conn, args):
         print("""Books module commands""")
 
-    def list(self, conn, args):
-        
-        string_books = ""
+    def list_output(self, conn, args):
         
         cur = conn.cursor()
         query_values_selected = make_execute_list(args)
         cur.execute(query_values_selected[0], query_values_selected[1])
         rows = cur.fetchall()
 
-        # Вывод в консоль
+        cur.close()
+        return rows
+
+# Для вывода в консоль данных в БД
+    def list(self, conn, args):
+        
+        string_books = ""
+        rows = self.list_output(conn, args)
+        query_values_selected = make_execute_list(args)
         for row in rows:
             inner = ", ".join(
                 f"{field}: {value}"
                 for field, value in zip(query_values_selected[2], row)
             )
             string_books+=f"{{Books: {{{inner}}}}}\n"
+        print(string_books)
 
-        cur.close()
-        #print(string_books)
-        return string_books
 
     def add(self, conn, args): # Здесь args - это список с кортежами значений из htmlparse!
         cur = conn.cursor()
@@ -113,8 +123,6 @@ class BookRepository():
         ))
         conn.commit()
         cur.close()
-
-# Возможно будет удаление
 
     def delete(self, conn, args):
         cur = conn.cursor()
