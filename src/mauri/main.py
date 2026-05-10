@@ -3,7 +3,10 @@ from mauri.models.dtbs import conn_dtbs, create_dtbs
 from mauri.parser.terminalparse import TerminalParser
 from mauri.parser.parser import Parser
 from mauri.utils.logger import setup_logger
+from mauri.ui.MainWindow import run_ui, Ui
 
+
+from mauri.utils.logger_ui import logger
 import sys
 import logging
 import os.path
@@ -19,7 +22,6 @@ if __name__ == "__main__":
 
     setup_logger()
     # Подключение к базам данных
-    logger = logging.getLogger(__name__)
 
     logger.info("ОК | Подключение к БД")
     cor = conn_dtbs()
@@ -43,12 +45,21 @@ if __name__ == "__main__":
         try:
             method(cor, args)
             logger.info("OK | method")
+            cor.close()
+            sys.exit(0)
         except ValueError:
             logger.error("Error | Не определен класс")
+            cor.close()
+            sys.exit(0)
 
-    else:
+    elif(type(obj) == Parser):
         obj.parse(cor)
         logger.info("OK | Парсинг завершен")
-    cor.close()
-    logger.info("ОК | Соединение закрыто")
+        cor.close()
+        logger.info("ОК | Соединение закрыто")
+        sys.exit(0)
+
+    elif(type(obj) == Ui):
+        cor.close()
+        run_ui()
     sys.exit(0)

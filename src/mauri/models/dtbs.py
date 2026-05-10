@@ -1,9 +1,9 @@
 import psycopg2
 import logging
 from mauri.utils.logger import setup_logger
-
+from mauri.utils.logger_ui import logger
 setup_logger()
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 def conn_dtbs():
     conn = psycopg2.connect(

@@ -3,9 +3,10 @@ from dataclasses import dataclass
 
 import logging
 from mauri.utils.logger import setup_logger
+from mauri.utils.logger_ui import logger
 
 setup_logger()
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 def make_execute_list(args):
         field_map = {

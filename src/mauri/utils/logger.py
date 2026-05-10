@@ -1,14 +1,18 @@
 import logging
 import os.path
+import queue
+
+from logging.handlers import QueueHandler
+from mauri.utils.settings import LOG_FILE, LOG_DIR
 
 def setup_logger():
 
-    if not os.path.exists("../logs"):
-        os.makedirs("../logs")
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
         print("Создана папка logs")
 
-    if not os.path.exists("../logs/mauri.log"):    
-        with open("../logs/mauri.logs", "w") as f:
+    if not os.path.exists(LOG_FILE):    
+        with open(LOG_FILE, "w") as f:
             f.write("LOGS FILE")
             print("Создан файл *.logs")
 
@@ -16,7 +20,10 @@ def setup_logger():
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[
-            logging.FileHandler("../logs/mauri.logs", encoding="utf-8"),
+            logging.FileHandler(LOG_FILE, encoding="utf-8"),
             logging.StreamHandler()
         ]
     )
+
+
+

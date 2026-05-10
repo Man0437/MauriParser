@@ -3,6 +3,7 @@ from playwright.sync_api import sync_playwright
 from mauri.models.books import Books, BookRepository
 from dataclasses import dataclass
 from mauri.utils.settings import HTML_FILE, CONFIG_FILE, COOKIES_FILE
+from mauri.utils.logger_ui import logger, log_queue
 
 import requests
 import os.path
@@ -12,7 +13,7 @@ from mauri.utils.logger import setup_logger
 import sys
 
 setup_logger()
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 # Если кому понадобится, то удобный вывод для записей с отпаршеного html, аналог Books.list() с другим выводом
 
 def print_books(name, author, type, price_n, i):
