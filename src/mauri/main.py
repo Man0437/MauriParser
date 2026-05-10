@@ -15,7 +15,7 @@ import os.path
 ENTITY = {
     "books": BookRepository,
     "parse": Parser,
-#     "ui": Ui Для будущей интеграции с UI
+    "ui": Ui
 }
 
 if __name__ == "__main__":
